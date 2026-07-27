@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="./resources/ol.css">
+        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+        <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+        html, body {
+            background-color: #ffffff;
+        }
+        .ol-control > * {
+            background-color: #f8f8f8!important;
+            color: #444444!important;
+            border-radius: 0px;
+        }
+        .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder {
+            color: #444444!important;
+        }
+        .search-layer-input-search {
+            background-color: #f8f8f8!important;
+        }
+        .ol-control > *:focus, .ol-control >*:hover {
+            background-color: rgba(248, 248, 248, 0.7)!important;
+        } 
+        .ol-control {
+            background-color: rgba(255,255,255,.4) !important;
+            padding: 2px !important;
+        } 
+        </style>
+
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <style>
+        :root{
+            --gv-bg:#0f172a;
+            --gv-bg-2:#1b2a4a;
+            --gv-panel:#1e293b;
+            --gv-panel-alt:#25334a;
+            --gv-border:#334155;
+            --gv-text:#f8fafc;
+            --gv-muted:#94a3b8;
+            --gv-accent:#2563eb;
+            --gv-accent-2:#0ea5e9;
+            --gv-accent-dark:#60a5fa;
+            --gv-warn:#fb923c;
+            --gv-radius:12px;
+            --gv-shadow:0 2px 10px rgba(0,0,0,.35);
+            --gv-shadow-hover:0 6px 18px rgba(0,0,0,.5);
+        }
+        *{box-sizing:border-box;}
+        html,body{overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--gv-text);}
+        #app{display:flex;flex-direction:column;height:100vh;width:100vw;}
+        #app-header{
+            flex:0 0 auto;background:linear-gradient(100deg,var(--gv-bg) 0%,var(--gv-bg-2) 100%);color:#fff;padding:12px 18px;
+            display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;position:relative;z-index:1000;
+            box-shadow:0 2px 12px rgba(0,0,0,.25);
+        }
+        #app-header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px;display:inline-flex;align-items:center;gap:9px;}
+        #app-header h1 i{color:var(--gv-accent-2);font-size:15px;}
+        #app-header .gv-sub{font-size:11.5px;color:#b7c2d6;}
+        #app-body{flex:1 1 auto;display:flex;min-height:0;}
+        #mapWindow{flex:1 1 auto;position:relative;min-width:0;}
+        #map{width:100%;height:100%;position:relative;}
+        #sidebar{
+            flex:0 0 360px;width:360px;max-width:88vw;background:var(--gv-panel);
+            border-left:1px solid var(--gv-border);display:flex;flex-direction:column;
+            min-height:0;transition:margin-right .2s ease;
+        }
+        #sidebar.gv-collapsed{margin-right:-360px;}
+        #sidebar-scroll{overflow-y:auto;flex:1 1 auto;padding:4px 14px 24px 14px;}
+        #sidebar-scroll::-webkit-scrollbar{width:8px;}
+        #sidebar-scroll::-webkit-scrollbar-track{background:var(--gv-panel);}
+        #sidebar-scroll::-webkit-scrollbar-thumb{background:var(--gv-border);border-radius:8px;}
+        #gv-toggle-btn{
+            position:absolute;top:10px;right:10px;z-index:1001;background:var(--gv-bg);color:#fff;
+            border:none;border-radius:8px;width:36px;height:36px;display:none;align-items:center;
+            justify-content:center;cursor:pointer;font-size:15px;
+        }
+        .gv-section{border-top:1px solid var(--gv-border);padding:16px 0;}
+        .gv-section:first-child{border-top:none;padding-top:6px;}
+        .gv-section h2{
+            font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gv-text);font-weight:700;
+            margin:0 0 12px 0;display:flex;align-items:center;gap:9px;
+        }
+        .gv-section h2 i{
+            width:26px;height:26px;flex:0 0 auto;border-radius:8px;
+            background:linear-gradient(135deg,var(--gv-accent) 0%,var(--gv-accent-2) 100%);
+            color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;
+            box-shadow:0 2px 6px rgba(37,99,235,.35);
+        }
+        .gv-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+        .gv-card{background:var(--gv-panel-alt);border:1px solid var(--gv-border);border-radius:10px;padding:10px 6px;text-align:center;transition:box-shadow .15s ease,transform .15s ease,border-color .15s ease;box-shadow:var(--gv-shadow);}
+        .gv-card:hover{box-shadow:var(--gv-shadow-hover);transform:translateY(-1px);border-color:var(--gv-accent);}
+        .gv-card i{color:var(--gv-accent-2);font-size:13px;margin-bottom:3px;display:block;}
+        .gv-card b{display:block;font-size:18px;color:var(--gv-text);line-height:1.15;}
+        .gv-card span{font-size:9.5px;color:var(--gv-muted);}
+        .gv-row{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:13px;border-radius:8px;transition:background .15s ease;}
+        .gv-row:hover{background:var(--gv-panel-alt);}
+        .gv-row label{flex:1 1 auto;cursor:pointer;}
+        .gv-count{font-size:11px;color:var(--gv-muted);background:var(--gv-panel);border:1px solid var(--gv-border);border-radius:8px;padding:1px 7px;}
+        .gv-row:hover .gv-count{background:var(--gv-panel-alt);}
+        .gv-swatch{width:13px;height:13px;border-radius:3px;flex:0 0 auto;border:1px solid rgba(255,255,255,.25);}
+        .gv-swatch.gv-line{height:4px;border-radius:2px;border:none;}
+        .gv-legend-mini{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gv-muted);padding:2px 0 2px 24px;}
+        .gv-note{font-size:11px;color:var(--gv-muted);margin-top:4px;line-height:1.35;}
+        #gv-sector-list{max-height:190px;overflow-y:auto;border:1px solid var(--gv-border);border-radius:10px;}
+        .gv-sector-item{padding:8px 10px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--gv-border);display:flex;align-items:center;gap:7px;transition:background .15s ease;}
+        .gv-sector-item i{color:var(--gv-muted);font-size:11px;}
+        .gv-sector-item:last-child{border-bottom:none;}
+        .gv-sector-item:hover{background:var(--gv-panel-alt);}
+        .gv-sector-item.active{background:rgba(37,99,235,.25);color:var(--gv-accent-dark);font-weight:600;}
+        .gv-sector-item.active i{color:var(--gv-accent-dark);}
+        .gv-basemap-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:13px;border-radius:8px;transition:background .15s ease;}
+        .gv-basemap-opt:hover{background:var(--gv-panel-alt);}
+        #top-right-container{display:none !important;}
+
+        /* ---- Apartado de analisis territorial ---- */
+        .gv-analysis-block{background:var(--gv-panel-alt);border:1px solid var(--gv-border);border-radius:10px;padding:12px 13px;margin-bottom:10px;box-shadow:var(--gv-shadow);}
+        .gv-analysis-block:last-child{margin-bottom:0;}
+        .gv-subhead{font-size:12.5px;font-weight:700;color:var(--gv-text);display:flex;align-items:center;gap:7px;margin:0 0 6px 0;}
+        .gv-subhead i{color:var(--gv-accent-2);font-size:12.5px;width:20px;text-align:center;}
+        .gv-analysis-text{font-size:11.5px;line-height:1.55;color:var(--gv-muted);margin:0 0 10px 0;}
+        .gv-analysis-text b{color:var(--gv-text);}
+        .gv-analysis-text b i{color:var(--gv-accent-2);font-size:10.5px;margin-right:2px;}
+        .gv-barchart{display:flex;flex-direction:column;gap:9px;}
+        .gv-bar-row{width:100%;}
+        .gv-bar-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin-bottom:3px;}
+        .gv-bar-label{color:var(--gv-text);font-weight:600;display:flex;align-items:center;gap:5px;}
+        .gv-bar-label i{font-size:10px;}
+        .gv-bar-value{color:var(--gv-muted);font-variant-numeric:tabular-nums;}
+        .gv-bar-track{background:#0f172a;border:1px solid var(--gv-border);border-radius:20px;height:10px;overflow:hidden;}
+        .gv-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--gv-accent) 0%,var(--gv-accent-2) 100%);transition:width .5s ease;}
+        .gv-stat-highlight{
+            display:flex;align-items:flex-start;gap:9px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.4);
+            border-radius:10px;padding:9px 10px;font-size:11.5px;line-height:1.5;color:#fed7aa;margin-top:2px;
+        }
+        .gv-stat-highlight i{color:var(--gv-warn);font-size:14px;margin-top:1px;flex:0 0 auto;}
+        .gv-mini-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:9px;}
+        @media (max-width:750px){
+            #sidebar{position:fixed;top:0;right:0;bottom:0;z-index:1000;box-shadow:-4px 0 14px rgba(0,0,0,.2);}
+            #gv-toggle-btn{display:flex;}
+        }
+        </style>
+        <title>Geovisualizador Urbano de Huaquillas</title>
+    </head>
+    <body>
+        <div id="map">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+        </div>
+        <script src="resources/qgis2web_expressions.js"></script>
+<script src="resources/proj4.js"></script>
+        <script>proj4.defs('EPSG:32717','+proj=utm +zone=17 +south +datum=WGS84 +units=m +no_defs');</script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        <script src="resources/photon-geocoder-autocomplete.min.js"></script>
+        <script src="resources/olms.js"></script>
+        <script src="layers/parcelas_1.js"></script><script src="layers/lotes_urbanos_2.js"></script><script src="layers/red_vial_3.js"></script><script src="layers/hidrografia_4.js"></script><script src="layers/EQUIPAMIENTO_5.js"></script><script src="layers/equipamientos_6.js"></script><script src="layers/areas_verdes_7.js"></script><script src="layers/Buffer_Educacion_300m_8.js"></script><script src="layers/Buffer_Salud_600m_9.js"></script>
+        <script src="styles/parcelas_1_style.js"></script><script src="styles/lotes_urbanos_2_style.js"></script><script src="styles/red_vial_3_style.js"></script><script src="styles/hidrografia_4_style.js"></script><script src="styles/EQUIPAMIENTO_5_style.js"></script><script src="styles/equipamientos_6_style.js"></script><script src="styles/areas_verdes_7_style.js"></script><script src="styles/Buffer_Educacion_300m_8_style.js"></script><script src="styles/Buffer_Salud_600m_9_style.js"></script>
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        <script src="./resources/qgis2web.js"></script>
+        <script>
+        /* ============================================================
+           PANEL LATERAL "GEOVISUALIZADOR" (Analisis, capas, tablero)
+           Se ejecuta despues de qgis2web.js, cuando ya existen:
+           map, layersList, y cada lyr_<capa> (OpenLayers).
+           ============================================================ */
+        (function(){
+
+        var mapDiv = document.getElementById('map');
+
+        var appEl = document.createElement('div');
+        appEl.id = 'app';
+
+        var headerEl = document.createElement('div');
+        headerEl.id = 'app-header';
+        headerEl.innerHTML =
+            '<h1><i class="fas fa-city"></i> Geovisualizador Urbano de Huaquillas</h1>' +
+            '<span class="gv-sub">Uso de suelo &middot; manzanas &middot; infraestructura &middot; riesgo y cobertura</span>';
+
+        var bodyEl = document.createElement('div');
+        bodyEl.id = 'app-body';
+
+        var mapWindow = document.createElement('div');
+        mapWindow.id = 'mapWindow';
+
+        var toggleBtn = document.createElement('button');
+        toggleBtn.id = 'gv-toggle-btn';
+        toggleBtn.innerHTML = '&#9776;';
+        toggleBtn.title = 'Mostrar/ocultar panel';
+        mapWindow.appendChild(toggleBtn);
+
+        var sidebar = document.createElement('div');
+        sidebar.id = 'sidebar';
+        var sidebarScroll = document.createElement('div');
+        sidebarScroll.id = 'sidebar-scroll';
+        sidebar.appendChild(sidebarScroll);
+
+        mapDiv.parentNode.insertBefore(appEl, mapDiv);
+        appEl.appendChild(headerEl);
+        appEl.appendChild(bodyEl);
+        bodyEl.appendChild(mapWindow);
+        bodyEl.appendChild(sidebar);
+        mapWindow.appendChild(mapDiv);
+
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('gv-collapsed');
+            setTimeout(function(){ map.updateSize(); }, 210);
+        });
+        if (window.innerWidth < 750) { sidebar.classList.add('gv-collapsed'); }
+        setTimeout(function(){ map.updateSize(); }, 60);
+
+        // ---- helpers ----------------------------------------------------
+        function gvSection(titleHtml) {
+            var s = document.createElement('div');
+            s.className = 'gv-section';
+            var h = document.createElement('h2');
+            h.innerHTML = titleHtml;
+            s.appendChild(h);
+            sidebarScroll.appendChild(s);
+            return s;
+        }
+        function gvSumField(json, field) {
+            var total = 0;
+            if (!json || !json.features) return 0;
+            json.features.forEach(function(f){
+                var v = parseFloat(f.properties[field]);
+                if (!isNaN(v)) total += v;
+            });
+            return total;
+        }
+        function gvCount(json) { return (json && json.features) ? json.features.length : 0; }
+        function gvFormat(n) { return Math.round(n).toLocaleString('es-EC'); }
+        function gvToggleRow(container, labelText, lyr, checked, countJson) {
+            var row = document.createElement('div');
+            row.className = 'gv-row';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = checked;
+            lyr.setVisible(checked);
+            var lab = document.createElement('label');
+            lab.textContent = labelText;
+            row.appendChild(cb);
+            row.appendChild(lab);
+            if (countJson !== undefined) {
+                var badge = document.createElement('span');
+                badge.className = 'gv-count';
+                badge.textContent = gvCount(countJson);
+                row.appendChild(badge);
+            }
+            cb.addEventListener('change', function() { lyr.setVisible(cb.checked); });
+            container.appendChild(row);
+            return row;
+        }
+        function gvLegendMini(container, colorCss, label, isLine) {
+            var row = document.createElement('div');
+            row.className = 'gv-legend-mini';
+            var sw = document.createElement('span');
+            sw.className = 'gv-swatch' + (isLine ? ' gv-line' : '');
+            sw.style.background = colorCss;
+            row.appendChild(sw);
+            var t = document.createElement('span');
+            t.textContent = label;
+            row.appendChild(t);
+            container.appendChild(row);
+        }
+        function gvBarChart(container, items, opts) {
+            opts = opts || {};
+            var wrap = document.createElement('div');
+            wrap.className = 'gv-barchart';
+            var max = opts.max || Math.max.apply(null, items.map(function(i){ return i.value; }));
+            items.forEach(function(it){
+                var row = document.createElement('div');
+                row.className = 'gv-bar-row';
+                var top = document.createElement('div');
+                top.className = 'gv-bar-top';
+                top.innerHTML = '<span class="gv-bar-label">' +
+                    (it.icon ? '<i class="' + it.icon + '"></i>' : '') + it.label + '</span>' +
+                    '<span class="gv-bar-value">' + it.valueLabel + '</span>';
+                row.appendChild(top);
+                var track = document.createElement('div');
+                track.className = 'gv-bar-track';
+                var fill = document.createElement('div');
+                fill.className = 'gv-bar-fill';
+                fill.style.width = Math.max(2, (it.value / max * 100)) + '%';
+                if (it.color) { fill.style.background = it.color; }
+                track.appendChild(fill);
+                row.appendChild(track);
+                wrap.appendChild(row);
+            });
+            container.appendChild(wrap);
+            return wrap;
+        }
+
+        // ---- 1. Analisis / indicadores ----------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-chart-pie"></i> An\u00e1lisis');
+            var cards = document.createElement('div');
+            cards.className = 'gv-cards';
+            cards.style.gridTemplateColumns = '1fr 1fr';
+            var manzanas = gvCount(json_lotes_urbanos_2);
+            var areaTotal = '827,896.69';
+            [['fas fa-border-all', gvFormat(manzanas),'Manzanas mapeadas'],
+             ['fas fa-ruler-combined', areaTotal,'\u00c1rea total (m\u00b2)']
+            ].forEach(function(c){
+                var card = document.createElement('div');
+                card.className = 'gv-card';
+                card.innerHTML = '<i class="' + c[0] + '"></i><b>' + c[1] + '</b><span>' + c[2] + '</span>';
+                cards.appendChild(card);
+            });
+            s.appendChild(cards);
+
+            // -- Analisis de cobertura de salud y educacion ---------------
+            var b1 = document.createElement('div');
+            b1.className = 'gv-analysis-block';
+            b1.style.marginTop = '12px';
+            b1.innerHTML =
+                '<div class="gv-subhead"><i class="fas fa-house-medical-circle-check"></i> An\u00e1lisis de Cobertura de Salud y Educaci\u00f3n</div>' +
+                '<p class="gv-analysis-text"><b><i class="fas fa-graduation-cap"></i> Educaci\u00f3n:</b> el an\u00e1lisis espacial revela que el \u00e1rea de influencia de la infraestructura educativa cubre <b>26 de las 46 manzanas</b> del sector, lo que equivale a una cobertura del <b>56.52%</b>.</p>' +
+                '<p class="gv-analysis-text"><b><i class="fas fa-hospital"></i> Salud:</b> el \u00e1rea de influencia de la infraestructura de salud cubre <b>36 de las 46 manzanas</b> del sector, lo que equivale a una cobertura del <b>78.26%</b>.</p>';
+            s.appendChild(b1);
+            gvBarChart(b1, [
+                {label:'Educaci\u00f3n', icon:'fas fa-graduation-cap', value:56.52, valueLabel:'56.52% \u00b7 26 de 46 manzanas', color:'rgb(0,18,232)'},
+                {label:'Salud', icon:'fas fa-hospital', value:78.26, valueLabel:'78.26% \u00b7 36 de 46 manzanas', color:'rgb(255,0,0)'}
+            ], {max: 100});
+            var covWarn = document.createElement('div');
+            covWarn.className = 'gv-stat-highlight';
+            covWarn.innerHTML = '<i class="fas fa-triangle-exclamation"></i><span><b>D\u00e9ficit de cobertura:</b> el <b>43.48%</b> de las manzanas queda fuera del radio de influencia educativo y el <b>21.74%</b> fuera del radio de salud.</span>';
+            b1.appendChild(covWarn);
+
+            // -- Distribucion y uso actual del suelo ----------------------
+            var b2 = document.createElement('div');
+            b2.className = 'gv-analysis-block';
+            b2.innerHTML =
+                '<div class="gv-subhead"><i class="fas fa-map-location-dot"></i> Distribuci\u00f3n y uso actual del suelo</div>' +
+                '<p class="gv-analysis-text"><b>Residencia:</b> corresponde al uso predominante en los sectores urbanos como Uni\u00f3n Lojana, 16 de Julio y Jaime Rold\u00f3s, abarcando aproximadamente el <b>65%</b> de la superficie total de parcelas destinadas a vivienda y asentamientos consolidados.</p>' +
+                '<p class="gv-analysis-text"><b>Suelo vacante:</b> representa los terrenos bald\u00edos o lotes sin edificaci\u00f3n distribuidos en la periferia de los sectores, ocupando cerca del <b>20%</b> del \u00e1rea total de parcelas.</p>' +
+                '<p class="gv-analysis-text" style="margin-bottom:0"><b>Comercial:</b> se concentra principalmente a lo largo de los ejes viales principales y zonas de equipamiento, abarcando el <b>15%</b> restante del suelo parcelado.</p>';
+            s.appendChild(b2);
+            gvBarChart(b2, [
+                {label:'Residencial', value:65, valueLabel:'65%', color:'rgb(248,234,0)'},
+                {label:'Suelo vacante', value:20, valueLabel:'20%', color:'rgb(231,33,178)'},
+                {label:'Comercial', value:15, valueLabel:'15%', color:'rgb(253,191,111)'}
+            ], {max: 65});
+
+            // -- Disponibilidad de espacio verde por habitante ------------
+            var b3 = document.createElement('div');
+            b3.className = 'gv-analysis-block';
+            b3.innerHTML =
+                '<div class="gv-subhead"><i class="fas fa-tree"></i> Disponibilidad de espacio verde por habitante</div>' +
+                '<p class="gv-analysis-text">Las \u00e1reas verdes representan apenas el <b>0.6%</b> del territorio total analizado, evidenciando un marcado d\u00e9ficit de espacio p\u00fablico natural en comparaci\u00f3n con el suelo residencial y parcelado.</p>';
+            s.appendChild(b3);
+            gvBarChart(b3, [
+                {label:'\u00c1rea verde actual', icon:'fas fa-seedling', value:0.6, valueLabel:'0.6% del territorio', color:'#e8590c'}
+            ], {max: 5});
+            var warn = document.createElement('div');
+            warn.className = 'gv-stat-highlight';
+            warn.innerHTML = '<i class="fas fa-triangle-exclamation"></i><span><b>D\u00e9ficit de \u00e1rea verde:</b> el est\u00e1ndar urban\u00edstico recomendado es de <b>9 a 15 m\u00b2</b> por habitante.</span>';
+            b3.appendChild(warn);
+        })();
+
+        // ---- 2. Distribucion del suelo (grafico de pastel Chart.js) -------
+        (function(){
+            var s = gvSection('<i class="fas fa-chart-pie"></i> Distribuci\u00f3n del Suelo');
+            var card = document.createElement('div');
+            card.className = 'gv-analysis-block';
+            var canvasWrap = document.createElement('div');
+            canvasWrap.style.position = 'relative';
+            canvasWrap.style.height = '230px';
+            var canvas = document.createElement('canvas');
+            canvas.id = 'gv-soil-pie';
+            canvasWrap.appendChild(canvas);
+            card.appendChild(canvasWrap);
+            s.appendChild(card);
+
+            // -- Capa "Parcelas" interactiva por seleccion (checkbox) --------
+            var parcelCard = document.createElement('div');
+            parcelCard.className = 'gv-analysis-block';
+            parcelCard.innerHTML = '<div class="gv-subhead"><i class="fas fa-draw-polygon"></i> Parcelas por uso de suelo</div>';
+            s.appendChild(parcelCard);
+
+            if (typeof lyr_parcelas_1 !== 'undefined') {
+                function gvNormalizeUso(str) {
+                    return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                }
+                var usoCats = [
+                    {label: 'Residencial', color: 'rgba(248,234,0,1.0)', key: gvNormalizeUso('RESIDENCIA')},
+                    {label: 'Suelo Vacante', color: 'rgba(231,33,178,1.0)', key: gvNormalizeUso('SUELO VACANTE')},
+                    {label: 'Comercial', color: 'rgba(253,191,111,1.0)', key: gvNormalizeUso('COMERCIAL')}
+                ];
+                var usoState = {};
+                usoCats.forEach(function(c){ usoState[c.key] = true; });
+                var origParcelasStyle = lyr_parcelas_1.getStyle();
+                lyr_parcelas_1.setStyle(function(feature, resolution){
+                    var key = gvNormalizeUso(feature.get('uso_suelo'));
+                    if (usoState.hasOwnProperty(key) && usoState[key] === false) { return null; }
+                    if (typeof origParcelasStyle === 'function') { return origParcelasStyle(feature, resolution); }
+                    return origParcelasStyle;
+                });
+                lyr_parcelas_1.setVisible(false);
+                if (map.getLayers().getArray().indexOf(lyr_parcelas_1) === -1) {
+                    map.addLayer(lyr_parcelas_1);
+                }
+
+                var masterRow = document.createElement('div');
+                masterRow.className = 'gv-row';
+                var masterCb = document.createElement('input');
+                masterCb.type = 'checkbox';
+                masterCb.checked = false;
+                var masterLab = document.createElement('label');
+                masterLab.textContent = 'Mostrar parcelas catastrales';
+                var masterBadge = document.createElement('span');
+                masterBadge.className = 'gv-count';
+                masterBadge.textContent = gvCount(json_parcelas_1);
+                masterRow.appendChild(masterCb);
+                masterRow.appendChild(masterLab);
+                masterRow.appendChild(masterBadge);
+                masterCb.addEventListener('change', function(){ lyr_parcelas_1.setVisible(masterCb.checked); });
+                parcelCard.appendChild(masterRow);
+
+                usoCats.forEach(function(cat){
+                    var row = document.createElement('div');
+                    row.className = 'gv-row';
+                    row.style.paddingLeft = '2px';
+                    var cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = true;
+                    var sw = document.createElement('span');
+                    sw.className = 'gv-swatch';
+                    sw.style.background = cat.color;
+                    var lab = document.createElement('label');
+                    lab.textContent = cat.label;
+                    row.appendChild(cb);
+                    row.appendChild(sw);
+                    row.appendChild(lab);
+                    cb.addEventListener('change', function(){
+                        usoState[cat.key] = cb.checked;
+                        if (!masterCb.checked) { masterCb.checked = true; lyr_parcelas_1.setVisible(true); }
+                        lyr_parcelas_1.changed();
+                    });
+                    parcelCard.appendChild(row);
+                });
+
+                var pNote = document.createElement('div');
+                pNote.className = 'gv-note';
+                pNote.textContent = gvCount(json_parcelas_1).toLocaleString('es-EC') + ' predios \u2014 capa pesada, desactivada por defecto.';
+                parcelCard.appendChild(pNote);
+            }
+
+            if (typeof Chart !== 'undefined') {
+                new Chart(canvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Residencial', '\u00c1rea Verde', 'Suelo Vacante', 'Educaci\u00f3n', 'Salud'],
+                        datasets: [{
+                            data: [65, 0.6, 20, 24.92, 0.90],
+                            backgroundColor: [
+                                'rgb(248,234,0)',
+                                'rgb(76,175,80)',
+                                'rgb(231,33,178)',
+                                'rgb(0,18,232)',
+                                'rgb(255,0,0)'
+                            ],
+                            borderColor: '#1e293b',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#f8fafc', font: { size: 11 }, boxWidth: 12, padding: 10 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx){ return ctx.label + ': ' + ctx.parsed + '%'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                var note = document.createElement('div');
+                note.className = 'gv-note';
+                note.textContent = 'No se pudo cargar Chart.js (verifica la conexi\u00f3n a internet).';
+                card.appendChild(note);
+            }
+        })();
+
+        // ---- 3. Manzanas y sectores ---------------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-city"></i> Manzanas y sectores');
+            gvToggleRow(s, 'Manzanas / sectores', lyr_lotes_urbanos_2, true, json_lotes_urbanos_2);
+
+            function gvNormalize(str) {
+                return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            }
+
+            var sectores = [
+                {label: '16 de Julio', color: 'rgb(230,97,195)', key: gvNormalize('16 de Julio')},
+                {label: 'Uni\u00f3n Lojana', color: 'rgb(159,204,26)', key: gvNormalize('Union Lojana')},
+                {label: 'Jaime Roldos', color: 'rgb(236,38,48)', key: gvNormalize('Jaime Roldos')}
+            ];
+            var sectorState = {};
+            sectores.forEach(function(sec){ sectorState[sec.key] = true; });
+
+            var originalStyle = lyr_lotes_urbanos_2.getStyle();
+            lyr_lotes_urbanos_2.setStyle(function(feature, resolution){
+                var raw = feature.get('nombre') != null ? feature.get('nombre') : (feature.get('sector') != null ? feature.get('sector') : '');
+                var key = gvNormalize(raw);
+                if (sectorState.hasOwnProperty(key) && sectorState[key] === false) { return null; }
+                if (typeof originalStyle === 'function') { return originalStyle(feature, resolution); }
+                return originalStyle;
+            });
+
+            sectores.forEach(function(sec){
+                var row = document.createElement('div');
+                row.className = 'gv-row';
+                row.style.paddingLeft = '2px';
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = true;
+                var sw = document.createElement('span');
+                sw.className = 'gv-swatch';
+                sw.style.background = sec.color;
+                sw.style.marginLeft = '2px';
+                var lab = document.createElement('label');
+                lab.textContent = sec.label;
+                row.appendChild(cb);
+                row.appendChild(sw);
+                row.appendChild(lab);
+                cb.addEventListener('change', function(){
+                    sectorState[sec.key] = cb.checked;
+                    if (!lyr_lotes_urbanos_2.getVisible()) { lyr_lotes_urbanos_2.setVisible(true); }
+                    lyr_lotes_urbanos_2.changed();
+                });
+                s.appendChild(row);
+            });
+        })();
+
+        // ---- 4. Infraestructura -------------------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-road"></i> Infraestructura');
+            gvToggleRow(s, 'Red vial', lyr_red_vial_3, true, json_red_vial_3);
+
+            // -- Red vial: recategorizar "Local" a naranja + control por tipo de via --
+            (function(){
+                var RV_LOCAL_NEW_COLOR = 'rgba(249,115,22,1.0)'; // #f97316
+                var RV_CATEGORY_COLORS = {
+                    arterial: [229,202,50],
+                    colectora: [220,34,99],
+                    local: [38,163,209]
+                };
+                var rvVisible = {arterial:true, colectora:true, local:true};
+                var origRedVialStyle = lyr_red_vial_3.getStyle();
+
+                function gvColorToRGB(color){
+                    if (!color) { return null; }
+                    if (Array.isArray(color)) { return [color[0], color[1], color[2]]; }
+                    if (typeof color === 'string') {
+                        var m = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+                        if (m) { return [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)]; }
+                    }
+                    return null;
+                }
+                function gvColorClose(a, b){
+                    if (!a || !b) { return false; }
+                    return Math.abs(a[0]-b[0]) <= 6 && Math.abs(a[1]-b[1]) <= 6 && Math.abs(a[2]-b[2]) <= 6;
+                }
+                function gvRoadCategory(styleResult){
+                    var arr = Array.isArray(styleResult) ? styleResult : [styleResult];
+                    for (var i = 0; i < arr.length; i++) {
+                        var st = arr[i];
+                        if (!st || typeof st.getStroke !== 'function') { continue; }
+                        var stroke = st.getStroke();
+                        if (!stroke) { continue; }
+                        var rgb = gvColorToRGB(stroke.getColor());
+                        if (!rgb) { continue; }
+                        for (var key in RV_CATEGORY_COLORS) {
+                            if (gvColorClose(rgb, RV_CATEGORY_COLORS[key])) { return key; }
+                        }
+                    }
+                    return null;
+                }
+
+                lyr_red_vial_3.setStyle(function(feature, resolution){
+                    var result = (typeof origRedVialStyle === 'function') ? origRedVialStyle(feature, resolution) : origRedVialStyle;
+                    if (!result) { return result; }
+                    var cat = gvRoadCategory(result);
+                    if (cat && rvVisible[cat] === false) { return null; }
+                    if (cat === 'local') {
+                        var arr = Array.isArray(result) ? result : [result];
+                        arr.forEach(function(st){
+                            if (st && typeof st.getStroke === 'function' && st.getStroke()) {
+                                st.getStroke().setColor(RV_LOCAL_NEW_COLOR);
+                            }
+                        });
+                    }
+                    return result;
+                });
+
+                [
+                    {key:'arterial', color:'rgb(229,202,50)', label:'Arterial'},
+                    {key:'colectora', color:'rgb(220,34,99)', label:'Colectora'},
+                    {key:'local', color:'#f97316', label:'Local'}
+                ].forEach(function(cat){
+                    var row = document.createElement('div');
+                    row.className = 'gv-row';
+                    row.style.paddingLeft = '2px';
+                    var cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = true;
+                    var sw = document.createElement('span');
+                    sw.className = 'gv-swatch gv-line';
+                    sw.style.background = cat.color;
+                    var lab = document.createElement('label');
+                    lab.textContent = cat.label;
+                    row.appendChild(cb);
+                    row.appendChild(sw);
+                    row.appendChild(lab);
+                    cb.addEventListener('change', function(){
+                        rvVisible[cat.key] = cb.checked;
+                        if (!lyr_red_vial_3.getVisible()) { lyr_red_vial_3.setVisible(true); }
+                        lyr_red_vial_3.changed();
+                    });
+                    s.appendChild(row);
+                });
+            })();
+
+            gvToggleRow(s, 'Hidrograf\u00eda (esteros)', lyr_hidrografia_4, true, json_hidrografia_4);
+            gvToggleRow(s, '\u00c1reas verdes', lyr_areas_verdes_7, true, json_areas_verdes_7);
+            gvToggleRow(s, 'Equipamientos (edificaciones)', lyr_EQUIPAMIENTO_5, true, json_EQUIPAMIENTO_5);
+            gvLegendMini(s, 'rgb(0,18,232)', 'Educaci\u00f3n');
+            gvLegendMini(s, 'rgb(255,0,0)', 'Salud');
+            gvToggleRow(s, 'Equipamientos (puntos)', lyr_equipamientos_6, true, json_equipamientos_6);
+        })();
+
+        // ---- 5. Cobertura ---------------------------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-bullseye"></i> Cobertura');
+            gvToggleRow(s, 'Buffer educaci\u00f3n (300 m)', lyr_Buffer_Educacion_300m_8, true, json_Buffer_Educacion_300m_8);
+            gvToggleRow(s, 'Buffer salud (600 m)', lyr_Buffer_Salud_600m_9, true, json_Buffer_Salud_600m_9);
+            // Opacidad reducida para que los buffers no saturen el mapa
+            if (typeof lyr_Buffer_Educacion_300m_8.setOpacity === 'function') { lyr_Buffer_Educacion_300m_8.setOpacity(0.35); }
+            if (typeof lyr_Buffer_Salud_600m_9.setOpacity === 'function') { lyr_Buffer_Salud_600m_9.setOpacity(0.35); }
+
+            var obs = document.createElement('div');
+            obs.style.marginTop = '10px';
+            obs.style.background = '#0f172a';
+            obs.style.border = '1px solid #334155';
+            obs.style.borderRadius = '10px';
+            obs.style.padding = '9px 10px';
+            obs.style.fontSize = '11.5px';
+            obs.style.lineHeight = '1.5';
+            obs.style.color = '#cbd5e1';
+            obs.innerHTML = '<b>Observaci\u00f3n:</b> <i>"No se puede inundar porque las cotas superan los 4.5 msnm, que es el l\u00edmite de riesgo de inundaci\u00f3n."</i>';
+            s.appendChild(obs);
+        })();
+
+        // ---- 6. Tablero por sector -------------------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-layer-group"></i> Sectores');
+            var note = document.createElement('div');
+            note.className = 'gv-note';
+            note.textContent = 'Datos reales por manzana. Clic para ver indicadores y ubicar en el mapa.';
+            s.appendChild(note);
+            var list = document.createElement('div');
+            list.id = 'gv-sector-list';
+            s.appendChild(list);
+
+            var olFeatures = lyr_lotes_urbanos_2.getSource().getFeatures();
+
+            (json_lotes_urbanos_2.features || []).forEach(function(feature, idx){
+                var item = document.createElement('div');
+                item.className = 'gv-sector-item';
+                var p = feature.properties;
+                item.innerHTML = '<i class="fas fa-location-dot"></i> ' + (p['nombre'] || ('Sector ' + (idx+1))) + (p['manzana'] ? ' \u2014 Mz. ' + p['manzana'] : '');
+                item.addEventListener('click', function(){
+                    Array.prototype.forEach.call(list.children, function(el){ el.classList.remove('active'); });
+                    item.classList.add('active');
+
+                    if (!lyr_lotes_urbanos_2.getVisible()) { lyr_lotes_urbanos_2.setVisible(true); }
+                    var olFeature = olFeatures[idx];
+                    if (olFeature) {
+                        var extent = olFeature.getGeometry().getExtent();
+                        map.getView().fit(extent, {size: map.getSize(), maxZoom: 18, duration: 300});
+                        var center = ol.extent.getCenter(extent);
+                        var html = '<table>' +
+                            '<tr><th scope="row">Sector</th><td>' + (p['nombre'] != null ? p['nombre'] : '\u2014') + '</td></tr>' +
+                            '<tr><th scope="row">Uso</th><td>' + (p['uso'] != null ? p['uso'] : '\u2014') + '</td></tr>' +
+                            '<tr><th scope="row">Habitantes</th><td>' + (p['n_habitantes'] != null ? Number(p['n_habitantes']).toLocaleString('es-EC') : '\u2014') + '</td></tr>' +
+                            '<tr><th scope="row">\u00c1rea (m\u00b2)</th><td>' + (p['area_m2'] != null ? Number(p['area_m2']).toLocaleString('es-EC') : '\u2014') + '</td></tr>' +
+                            '</table>';
+                        var popupContainer = document.getElementById('popup');
+                        var popupContent = document.getElementById('popup-content');
+                        if (popupContainer && popupContent && typeof overlayPopup !== 'undefined') {
+                            popupContent.innerHTML = html;
+                            popupContainer.style.display = 'block';
+                            overlayPopup.setPosition(center);
+                        }
+                    }
+                });
+                list.appendChild(item);
+            });
+        })();
+
+        // ---- 7. Mapa base ----------------------------------------------------
+        (function(){
+            var s = gvSection('<i class="fas fa-globe"></i> Mapa base');
+            var lyr_Satellite_0 = new ol.layer.Tile({
+                title: 'Sat\u00e9lite',
+                opacity: 1.0,
+                source: new ol.source.XYZ({
+                    attributions: 'Tiles &copy; Esri',
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                })
+            });
+            lyr_Satellite_0.setVisible(false);
+            map.getLayers().insertAt(1, lyr_Satellite_0);
+
+            var opts = [
+                ['Calles (OSM)', lyr_OpenStreetMap_0, true],
+                ['Sat\u00e9lite', lyr_Satellite_0, false]
+            ];
+            opts.forEach(function(o){
+                var row = document.createElement('div');
+                row.className = 'gv-basemap-opt';
+                var rb = document.createElement('input');
+                rb.type = 'radio';
+                rb.name = 'gv-basemap';
+                rb.checked = o[2];
+                var lab = document.createElement('label');
+                lab.textContent = o[0];
+                row.appendChild(rb);
+                row.appendChild(lab);
+                s.appendChild(row);
+                rb.addEventListener('change', function(){
+                    opts.forEach(function(other){ other[1].setVisible(false); });
+                    o[1].setVisible(true);
+                });
+            });
+        })();
+
+        })();
+        </script>
+    </body>
+</html>
